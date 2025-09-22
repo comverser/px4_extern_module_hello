@@ -2,22 +2,22 @@
 
 External module template for PX4.
 
+## Requirements
+
+- Ubuntu (x86_64)
+- just
+- zellij
+
 ## Setup
 
 ```bash
-sudo apt install just
+just init
 ```
 
 ## Usage
 
 ```bash
-just init   # Setup project
-just run    # Run PX4
-just clean  # Clean build
+just run     # Run PX4
+just close   # Close all processes
+just clean   # Clean build
 ```
-
-## Structure
-
-- `/PX4-Autopilot/` - Core PX4 (don't modify)
-- `/apps/` - Downloaded apps (gitignored)
-- Root - Your module code
