@@ -9,7 +9,26 @@ init:
 
 # Run PX4 with simulator and ground control
 run: init
-	@zellij --layout layout.kdl
+	@echo 'layout {' > /tmp/px4_layout.kdl
+	@echo '    tab name="PX4" {' >> /tmp/px4_layout.kdl
+	@echo '        pane split_direction="vertical" {' >> /tmp/px4_layout.kdl
+	@echo '            pane name="PX4" {' >> /tmp/px4_layout.kdl
+	@echo '                command "bash"' >> /tmp/px4_layout.kdl
+	@echo '                args "-c" "cd '$(pwd)'/PX4-Autopilot && make px4_sitl gz_x500 EXTERNAL_MODULES_LOCATION=../"' >> /tmp/px4_layout.kdl
+	@echo '            }' >> /tmp/px4_layout.kdl
+	@echo '            pane split_direction="horizontal" {' >> /tmp/px4_layout.kdl
+	@echo '                pane name="QGC" {' >> /tmp/px4_layout.kdl
+	@echo '                    command "bash"' >> /tmp/px4_layout.kdl
+	@echo '                    args "-c" "sleep 5 && '$(pwd)'/apps/QGroundControl.AppImage"' >> /tmp/px4_layout.kdl
+	@echo '                }' >> /tmp/px4_layout.kdl
+	@echo '                pane name="Terminal" focus=true {' >> /tmp/px4_layout.kdl
+	@echo '                    command "bash"' >> /tmp/px4_layout.kdl
+	@echo '                }' >> /tmp/px4_layout.kdl
+	@echo '            }' >> /tmp/px4_layout.kdl
+	@echo '        }' >> /tmp/px4_layout.kdl
+	@echo '    }' >> /tmp/px4_layout.kdl
+	@echo '}' >> /tmp/px4_layout.kdl
+	@zellij --layout /tmp/px4_layout.kdl
 
 # Close all PX4 processes
 close:
