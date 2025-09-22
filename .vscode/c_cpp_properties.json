@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "name": "PX4 External Module",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "compileCommands": "${workspaceFolder}/PX4-Autopilot/build/px4_sitl_default/compile_commands.json"
+        }
+    ],
+    "version": 4
+}
