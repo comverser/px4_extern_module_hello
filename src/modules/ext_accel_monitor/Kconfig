@@ -1,0 +1,3 @@
+menuconfig MODULES_EXT_ACCEL_MONITOR
+    bool "ext_accel_monitor"
+    default n

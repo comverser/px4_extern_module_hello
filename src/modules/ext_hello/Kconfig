@@ -1,0 +1,3 @@
+menuconfig MODULES_EXT_HELLO
+	bool "ext_hello"
+	default n

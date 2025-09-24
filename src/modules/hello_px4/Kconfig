@@ -1,3 +1,0 @@
-menuconfig MODULES_HELLO_PX4
-	bool "hello_px4"
-	default n

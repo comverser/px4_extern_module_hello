@@ -1,0 +1,3 @@
+menuconfig MODULES_EXT_MOTOR_CONTROL
+	bool "ext_motor_control"
+	default n

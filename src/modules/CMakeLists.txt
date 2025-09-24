@@ -1,1 +1,3 @@
-add_subdirectory(hello_px4)
+add_subdirectory(ext_hello)
+add_subdirectory(ext_accel_monitor)
+add_subdirectory(ext_motor_control)
