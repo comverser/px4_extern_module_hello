@@ -1,117 +1,90 @@
 #include <px4_platform_common/px4_config.h>
 #include <px4_platform_common/log.h>
-#include <px4_platform_common/module.h>
-#include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
+#include <px4_platform_common/tasks.h>
+#include <px4_platform_common/posix.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <poll.h>
+#include <string.h>
+#include <math.h>
 
-#include <uORB/Subscription.hpp>
-#include <uORB/topics/sensor_accel.h>
+#include <uORB/uORB.h>
+#include <uORB/topics/vehicle_acceleration.h>
+#include <uORB/topics/vehicle_attitude.h>
 
-using namespace px4;
+extern "C" __EXPORT int ext_accel_monitor_main(int argc, char *argv[]);
 
-class ExtAccelMonitor : public ModuleBase<ExtAccelMonitor>, public ScheduledWorkItem
+int ext_accel_monitor_main(int argc, char *argv[])
 {
-public:
-    ExtAccelMonitor();
-    ~ExtAccelMonitor() override = default;
+	PX4_INFO("External Accel Monitor Started!");
 
-    static int task_spawn(int argc, char *argv[]);
-    static int custom_command(int argc, char *argv[]);
-    static int print_usage(const char *reason = nullptr);
+	/* subscribe to vehicle_acceleration topic */
+	int sensor_sub_fd = orb_subscribe(ORB_ID(vehicle_acceleration));
+	/* limit the update rate to 5 Hz */
+	orb_set_interval(sensor_sub_fd, 200);
 
-    void Run() override;
+	/* advertise attitude topic */
+	struct vehicle_attitude_s att;
+	memset(&att, 0, sizeof(att));
+	orb_advert_t att_pub = orb_advertise(ORB_ID(vehicle_attitude), &att);
 
-private:
-    uORB::Subscription _accel_sub{ORB_ID(sensor_accel)};
-    uint32_t _count{0};
-    uint64_t _last_timestamp{0};
-};
+	/* one could wait for multiple topics with this technique, just using one here */
+	px4_pollfd_struct_t fds[] = {
+		{ .fd = sensor_sub_fd,   .events = POLLIN },
+		/* there could be more file descriptors here, in the form like:
+		 * { .fd = other_sub_fd,   .events = POLLIN },
+		 */
+	};
 
-ExtAccelMonitor::ExtAccelMonitor() :
-    ModuleBase(),
-    ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::test1)
-{
-}
+	int error_counter = 0;
 
-void ExtAccelMonitor::Run()
-{
-    if (should_exit()) {
-        ScheduleClear();
-        exit_and_cleanup();
-        return;
-    }
+	for (int i = 0; i < 5; i++) {
+		/* wait for sensor update of 1 file descriptor for 1000 ms (1 second) */
+		int poll_ret = px4_poll(fds, 1, 1000);
 
-    sensor_accel_s accel{};
-    if (_accel_sub.copy(&accel)) {
-        // Only process if we have a new timestamp
-        if (accel.timestamp > _last_timestamp) {
-            _last_timestamp = accel.timestamp;
-            _count++;
-            if (_count % 100 == 0) {
-                PX4_INFO("Accel: x=%.2f y=%.2f z=%.2f (samples: %u)",
-                        (double)accel.x, (double)accel.y, (double)accel.z, _count);
-            }
-        }
-    }
+		/* handle the poll result */
+		if (poll_ret == 0) {
+			/* this means none of our providers is giving us data */
+			PX4_ERR("Got no data within a second");
 
-    // Use a longer delay to reduce system load
-    ScheduleDelayed(200000);  // 200ms instead of 100ms
-}
+		} else if (poll_ret < 0) {
+			/* this is seriously bad - should be an emergency */
+			if (error_counter < 10 || error_counter % 50 == 0) {
+				/* use a counter to prevent flooding (and slowing us down) */
+				PX4_ERR("ERROR return value from poll(): %d", poll_ret);
+			}
 
-int ExtAccelMonitor::task_spawn(int argc, char *argv[])
-{
-    ExtAccelMonitor *instance = new ExtAccelMonitor();
+			error_counter++;
 
-    if (instance) {
-        _object.store(instance);
-        _task_id = task_id_is_work_queue;
-        instance->ScheduleNow();
-        PX4_INFO("Accel monitor started successfully");
-        return PX4_OK;
-    }
+		} else {
 
-    PX4_ERR("alloc failed");
-    delete instance;
-    _object.store(nullptr);
-    _task_id = -1;
-    return PX4_ERROR;
-}
+			if (fds[0].revents & POLLIN) {
+				/* obtained data for the first file descriptor */
+				struct vehicle_acceleration_s accel;
+				/* copy sensors raw data into local buffer */
+				orb_copy(ORB_ID(vehicle_acceleration), sensor_sub_fd, &accel);
+				PX4_INFO("Accelerometer:\t%8.4f\t%8.4f\t%8.4f",
+					 (double)accel.xyz[0],
+					 (double)accel.xyz[1],
+					 (double)accel.xyz[2]);
 
-int ExtAccelMonitor::custom_command(int argc, char *argv[])
-{
-    return print_usage("unknown command");
-}
+				/* set att and publish this information for other apps
+				 the following does not have any meaning, it's just an example
+				*/
+				att.q[0] = accel.xyz[0];
+				att.q[1] = accel.xyz[1];
+				att.q[2] = accel.xyz[2];
 
-int ExtAccelMonitor::print_usage(const char *reason)
-{
-    if (reason) {
-        PX4_WARN("%s\n", reason);
-    }
+				orb_publish(ORB_ID(vehicle_attitude), att_pub, &att);
+			}
 
-    PRINT_MODULE_DESCRIPTION(
-        R"DESCR_STR(
-### Description
-Monitors accelerometer data and prints values periodically.
+			/* there could be more file descriptors here, in the form like:
+			 * if (fds[1..n].revents & POLLIN) {}
+			 */
+		}
+	}
 
-### Examples
-Start the monitor:
-$ ext_accel_monitor start
+	PX4_INFO("exiting");
 
-Stop the monitor:
-$ ext_accel_monitor stop
-
-Check status:
-$ ext_accel_monitor status
-)DESCR_STR");
-
-    PRINT_MODULE_USAGE_NAME("ext_accel_monitor", "driver");
-    PRINT_MODULE_USAGE_COMMAND("start");
-    PRINT_MODULE_USAGE_COMMAND("stop");
-    PRINT_MODULE_USAGE_COMMAND("status");
-
-    return 0;
-}
-
-extern "C" __EXPORT int ext_accel_monitor_main(int argc, char *argv[])
-{
-    return ExtAccelMonitor::main(argc, argv);
+	return 0;
 }

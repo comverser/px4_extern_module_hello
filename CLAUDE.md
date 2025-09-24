@@ -27,3 +27,4 @@ make px4_sitl gz_x500 EXTERNAL_MODULES_LOCATION=../
 
 - Ubuntu x86_64 only
 - Never modify PX4-Autopilot submodule
+- All code must work on both real hardware and SITL simulation

@@ -72,6 +72,28 @@ close:
 	pgrep -f "gz sim" > /dev/null 2>&1 && echo "⚠ Warning: Gazebo may still be running" || echo "✓ Gazebo closed"
 	pgrep -f "QGroundControl" > /dev/null 2>&1 && echo "⚠ Warning: QGroundControl may still be running" || echo "✓ QGroundControl closed"
 
+# Build firmware for hardware with external modules
+build_hw:
+	#!/bin/bash
+	echo "Select hardware:"
+	echo "  1) Cube Orange"
+	echo "  2) Holybro 6C mini"
+	read -p "Enter choice [1-2]: " choice
+	case $choice in
+		1) target="cubepilot_cubeorange" ;;
+		2) target="holybro_pix32v6c" ;;
+		*) echo "Invalid choice"; exit 1 ;;
+	esac
+	cd PX4-Autopilot && make ${target}_default EXTERNAL_MODULES_LOCATION=../
+	# Copy firmware to root directory maintaining path structure
+	mkdir -p ../build/${target}_default
+	cp -v build/${target}_default/${target}_default.px4 ../build/${target}_default/
+	cp -v build/${target}_default/${target}_default.elf ../build/${target}_default/
+	cp -v build/${target}_default/${target}_default.bin ../build/${target}_default/ 2>/dev/null || true
+	echo ""
+	echo "✓ Firmware copied to: build/${target}_default/${target}_default.px4"
+	echo "  Upload this file to your hardware using QGroundControl"
+
 # Clean build artifacts
 clean:
 	@cd PX4-Autopilot && make clean
