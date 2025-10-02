@@ -1,3 +1,7 @@
+# Show available commands
+default:
+	@just --list --unsorted
+
 # Initialize project dependencies
 init:
 	@git submodule update --init --recursive

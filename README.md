@@ -17,10 +17,7 @@ just init
 ## Usage
 
 ```bash
-just run      # Run PX4 SITL with QGC (press Ctrl-Q to end Zellij)
-just close    # Close all processes
-just clean    # Clean build
-just build_hw # Build firmware for hardware (interactive)
+just          # List available commands
 ```
 
 ## MAVLink Console Examples
