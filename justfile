@@ -4,12 +4,24 @@ default:
 
 # Initialize submodules and download QGroundControl
 init:
-	@git submodule update --init --recursive
-	@mkdir -p apps
-	@[ -f apps/QGroundControl.AppImage ] || ( \
+	#!/bin/bash
+	# Initialize submodules
+	git submodule update --init --recursive
+	# Download QGroundControl
+	mkdir -p apps
+	[ -f apps/QGroundControl.AppImage ] || ( \
 		wget -qO apps/QGroundControl.AppImage https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage && \
 		chmod +x apps/QGroundControl.AppImage \
 	)
+	# Install Python dependencies
+	sudo apt-get install -y python3-kconfiglib python3-empy
+	pip3 install --break-system-packages pyros-genmsg
+	# Check for Gazebo
+	if ! command -v gz &> /dev/null; then
+		echo "⚠ Warning: Gazebo Harmonic not found. Please install it first (see README.md)"
+		exit 1
+	fi
+	echo "✓ All dependencies ready"
 
 # Run PX4 with simulator and ground control
 run: init

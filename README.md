@@ -5,10 +5,14 @@ External module template for PX4.
 ## Requirements
 
 - Ubuntu (x86_64)
+- Python 3 with pip
+- Gazebo Harmonic
 - just
 - zellij
 
 ## Setup
+
+**Important**: Uninstall Anaconda/Miniconda if installed. It causes protobuf version conflicts with Gazebo.
 
 ```bash
 just init
