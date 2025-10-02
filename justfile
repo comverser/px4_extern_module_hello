@@ -1,8 +1,8 @@
-# Show available commands
+# List available commands
 default:
 	@just --list --unsorted
 
-# Initialize project dependencies
+# Initialize submodules and download QGroundControl
 init:
 	@git submodule update --init --recursive
 	@mkdir -p apps
