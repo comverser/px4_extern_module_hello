@@ -84,21 +84,37 @@ build_hw:
 	echo "Select hardware:"
 	echo "  1) Cube Orange"
 	echo "  2) Holybro 6C mini"
-	read -p "Enter choice [1-2]: " choice
+	read -p "Enter choice [1-2] (default: 1): " choice
+	choice=${choice:-1}
 	case $choice in
 		1) target="cubepilot_cubeorange" ;;
-		2) target="holybro_pix32v6c" ;;
+		2) target="px4_fmu-v6c" ;;
 		*) echo "Invalid choice"; exit 1 ;;
 	esac
 	cd PX4-Autopilot && make ${target}_default EXTERNAL_MODULES_LOCATION=../
-	# Copy firmware to root directory maintaining path structure
-	mkdir -p ../build/${target}_default
-	cp -v build/${target}_default/${target}_default.px4 ../build/${target}_default/
-	cp -v build/${target}_default/${target}_default.elf ../build/${target}_default/
-	cp -v build/${target}_default/${target}_default.bin ../build/${target}_default/ 2>/dev/null || true
+
+	# Copy to Windows Downloads if WSL2
 	echo ""
-	echo "✓ Firmware copied to: build/${target}_default/${target}_default.px4"
-	echo "  Upload this file to your hardware using QGroundControl"
+	read -p "Are you using WSL2? Copy to Windows Downloads? [Y/n] (default: Y): " copy_choice
+	copy_choice=${copy_choice:-Y}
+
+	if [[ "$copy_choice" =~ ^[Yy]$ ]]; then
+		# Get Windows username
+		WIN_USER=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
+		if [ -n "$WIN_USER" ]; then
+			WIN_DOWNLOADS="/mnt/c/Users/${WIN_USER}/Downloads"
+			if [ -d "$WIN_DOWNLOADS" ]; then
+				cp -v build/${target}_default/${target}_default.px4 "$WIN_DOWNLOADS/"
+				echo "✓ Firmware copied to Windows Downloads folder"
+			else
+				echo "⚠ Warning: Could not find Windows Downloads folder"
+			fi
+		else
+			echo "⚠ Warning: Could not determine Windows username"
+		fi
+	fi
+	echo ""
+	echo "✓ Build complete: PX4-Autopilot/build/${target}_default/${target}_default.px4"
 
 # Clean build artifacts
 clean:
