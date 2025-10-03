@@ -4,23 +4,25 @@ External module template for PX4.
 
 ## Requirements
 
-- Ubuntu (x86_64)
-- Python 3 packages: `python3-kconfiglib python3-empy pyros-genmsg`
-- Gazebo Harmonic
-- just
-- zellij
+- [Ubuntu](https://ubuntu.com/download)
+- Python 3 packages: [kconfiglib](https://pypi.org/project/kconfiglib/) [empy](https://pypi.org/project/empy/) [pyros-genmsg](https://pypi.org/project/pyros-genmsg/)
+- [Gazebo Harmonic](https://gazebosim.org/docs/harmonic/install)
+- [just](https://github.com/casey/just#installation)
+- [zellij](https://zellij.dev/documentation/installation)
 
 ## Setup
 
 **Important**: Uninstall Anaconda/Miniconda if installed. It causes protobuf version conflicts with Gazebo.
 
 Install system dependencies:
+
 ```bash
 sudo apt-get install -y python3-kconfiglib python3-empy
 pip3 install --break-system-packages pyros-genmsg
 ```
 
 Initialize the project:
+
 ```bash
 just init
 ```
