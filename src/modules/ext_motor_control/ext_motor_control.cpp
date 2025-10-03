@@ -6,15 +6,13 @@
 #include <unistd.h>
 
 static bool running = false;
-static bool armed = false;
-static hrt_abstime start_time = 0;
 
 extern "C" __EXPORT int ext_motor_control_main(int argc, char *argv[]);
 
 int ext_motor_control_main(int argc, char *argv[])
 {
 	if (argc < 2) {
-		PX4_INFO("Usage: ext_motor_control {start|stop|arm|disarm}");
+		PX4_INFO("Usage: ext_motor_control {start|stop}");
 		return 1;
 	}
 
@@ -24,32 +22,8 @@ int ext_motor_control_main(int argc, char *argv[])
 			return 1;
 		}
 		running = true;
-		armed = false;
-		PX4_INFO("Started - use 'ext_motor_control arm' to test motor");
-		return 0;
-	}
 
-	if (!strcmp(argv[1], "stop")) {
-		running = false;
-		armed = false;
-		PX4_INFO("Stopped");
-		return 0;
-	}
-
-	if (!strcmp(argv[1], "arm")) {
-		if (!running) {
-			PX4_WARN("Not running - use 'ext_motor_control start' first");
-			return 1;
-		}
-
-		PX4_WARN("Motor test - Remove propellers! Press 'y' to continue");
-		char c;
-		if (read(0, &c, 1) != 1 || c != 'y') {
-			return 1;
-		}
-
-		armed = true;
-		start_time = hrt_absolute_time();
+		hrt_abstime start_time = hrt_absolute_time();
 		PX4_INFO("Motor test started");
 
 		uORB::Publication<actuator_test_s> actuator_test_pub{ORB_ID(actuator_test)};
@@ -65,11 +39,10 @@ int ext_motor_control_main(int argc, char *argv[])
 
 		PX4_INFO("Testing motor 1 for 4 seconds at 15%% max throttle");
 
-		while (armed && running) {
+		while (running) {
 			float elapsed_s = (hrt_absolute_time() - start_time) / 1e6f;
 
 			if (elapsed_s > 4.0f) {
-				armed = false;
 				break;
 			}
 
@@ -108,14 +81,14 @@ int ext_motor_control_main(int argc, char *argv[])
 		stop_test.timeout_ms = 0;
 		actuator_test_pub.publish(stop_test);
 
-		armed = false;
+		running = false;
 		PX4_INFO("Test complete");
 		return 0;
 	}
 
-	if (!strcmp(argv[1], "disarm")) {
-		armed = false;
-		PX4_INFO("Disarmed");
+	if (!strcmp(argv[1], "stop")) {
+		running = false;
+		PX4_INFO("Stopped");
 		return 0;
 	}
 
