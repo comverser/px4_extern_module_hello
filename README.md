@@ -15,7 +15,7 @@ Template for developing PX4 external modules without modifying the core PX4 sour
 ## Usage
 
 ```bash
-just          # List available commands
+just --list --unsorted   # List available commands
 ```
 
 ## MAVLink Console Examples

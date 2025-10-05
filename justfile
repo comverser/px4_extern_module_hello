@@ -1,6 +1,5 @@
-# List available commands
-default:
-	@just --list --unsorted
+# Run PX4 with simulator and ground control (default)
+default: run
 
 # Initialize submodules and download QGroundControl
 init:
