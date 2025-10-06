@@ -5,7 +5,8 @@ default: run
 init:
 	# Pull latest changes
 	git pull --rebase
-	# Initialize submodules
+	# Update PX4-Autopilot to latest, then initialize all nested submodules
+	git submodule update --remote PX4-Autopilot
 	git submodule update --init --recursive
 	# Download QGroundControl
 	mkdir -p apps
