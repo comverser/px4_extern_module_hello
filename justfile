@@ -4,7 +4,7 @@ default: run
 # Initialize submodules and download QGroundControl
 init:
 	# Pull latest changes
-	git pull
+	git pull --rebase
 	# Initialize submodules
 	git submodule update --init --recursive
 	# Download QGroundControl
