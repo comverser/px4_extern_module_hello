@@ -4,7 +4,7 @@ default: run
 # Initialize submodules and download QGroundControl
 init:
 	# Pull latest changes
-	git pull --rebase
+	git pull --rebase --autostash
 	# Update PX4-Autopilot to latest, then initialize its nested submodules
 	git submodule update --init --remote PX4-Autopilot
 	cd PX4-Autopilot && git submodule update --init --recursive
